@@ -1,0 +1,13 @@
+#define RH_TEST_NETWORK 2
+#include "DataHandling.h"
+
+void setup()
+{
+    Serial.begin(115200);
+    DataHandling::GetInstance();
+    Serial.printf("Endnode Lora with Addres %d Initialized \n", selfAddres);
+}
+
+void loop()
+{
+}
