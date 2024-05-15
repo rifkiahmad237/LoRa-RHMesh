@@ -38,7 +38,7 @@ void ReadVIP(const long interval)
     float power;
     if (currentMillis - prevMillis2 >= interval)
     {
-        VIP::GetInstance()->GetVoltageData(&adc_value, &v_rms, &v_ac);
+        VIP::GetInstance()->GetVoltageData(&adc_value, &v_rms, &v_ac, 2);
         Serial.printf("=======\nADC Voltage: %d\n", adc_value);
         Serial.printf("Sirine Voltage (VIP): %f\n", v_rms);
         Serial.printf("AC Voltage: %f \n=======\n", v_ac);

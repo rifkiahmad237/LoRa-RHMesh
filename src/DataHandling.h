@@ -3,7 +3,6 @@
 #define DATAHANDLING_H
 #include <Arduino.h>
 #include <functional>
-#include <esp_now.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
 #include <sys/time.h>
@@ -47,15 +46,14 @@ typedef struct node1_message
 {
     float temp;
     float hum;
-    bool mot_speed;
+    float mot_speed;
 } node1_message;
 
 typedef struct node2_message
 {
-    bool led;
-    float angle_x;
-    float angle_y;
-    float angle_z;
+    // bool led;
+    unsigned long time_stamp;
+    float pga;
 } node2_message;
 
 struct timeval;

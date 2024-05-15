@@ -1,5 +1,12 @@
 #include "VIP.h"
-// ZMPT101B voltage(VOLTAGE_PIN, 50.0);
+
+/*
+Credit to:
+1. ZMPT101B Library by Abdurraziq Bachmid
+    - https://github.com/Abdurraziq/ZMPT101B-arduino.git
+2. Interfacing ZMCT103C 5A AC Current Transformer Module with Arduino
+    - https://electropeak.com/learn/interfacing-zmct103c-5a-ac-current-transformer-module-with-arduino
+*/
 
 VIP *VIP::GetInstance()
 {
@@ -26,6 +33,7 @@ void VIP::GetVoltageData(uint16_t *adc_var, float *voltage, float *voltage_ac, u
         while (micros() - t_start < period)
         {
             _ADC_Value = analogRead(VOLTAGE_PIN);
+            // _ADC_Value = random(1000, ADC_MAX);
             Vnow = _ADC_Value - _zeroPoint;
             Vsum += (Vnow * Vnow);
             meas_count++;
@@ -78,7 +86,7 @@ void VIP::GetCurrentData(uint16_t *adc_var, float *current)
 
 void VIP::GetPowerData(float *power, float *v_rms, float *i_rms)
 {
-    *power = (*i_rms) * (*i_rms) * (*v_rms);
+    *power = (*i_rms) * (*v_rms);
 }
 
 int VIP::getZeroPoint()

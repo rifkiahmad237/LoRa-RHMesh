@@ -35,8 +35,7 @@ void DataHandling::sendDataToGateway(const uint8_t *struct_message)
         // JsonObject client1 = _jsonDoc["client"].to<JsonObject>();
         if (memcmp(&node1MessageRx, struct_message, sizeof(node1MessageRx)) == 0)
         {
-            _jsonArrayTx = _jsonDocTx.createNestedArray("client1");
-            _jsonArrayTx = _jsonDocTx["client1"].to<JsonArray>();
+            _jsonArrayTx = _jsonDocTx.createNestedArray("node1");
             _jsonArrayTx.add(node1MessageRx.temp);
             _jsonArrayTx.add(node1MessageRx.hum);
             _jsonArrayTx.add(node1MessageRx.mot_speed);
@@ -45,11 +44,13 @@ void DataHandling::sendDataToGateway(const uint8_t *struct_message)
 
         else if (memcmp(&node2MessageRx, struct_message, sizeof(node2MessageRx)) == 0)
         {
-            _jsonArrayTx = _jsonDocTx.createNestedArray("client2");
-            _jsonArrayTx.add(node2MessageRx.led);
-            _jsonArrayTx.add(node2MessageRx.angle_x);
-            _jsonArrayTx.add(node2MessageRx.angle_y);
-            _jsonArrayTx.add(node2MessageRx.angle_z);
+            _jsonArrayTx = _jsonDocTx.createNestedArray("node2");
+            // _jsonArrayTx.add(node2MessageRx.led);
+            _jsonArrayTx.add(node2MessageRx.time_stamp);
+            _jsonArrayTx.add(node2MessageRx.pga);
+            // _jsonArrayTx.add(node2MessageRx.angle_x);
+            // _jsonArrayTx.add(node2MessageRx.angle_y);
+            // _jsonArrayTx.add(node2MessageRx.angle_z);
         }
         else if (memcmp(&powerMessage, struct_message, sizeof(powerMessage)) == 0)
         {
@@ -113,14 +114,14 @@ void DataHandling::recvDataFromGateWay()
                 }
                 gatewaySendMessage.time_stamp = DataHandling::getTime();
                 Serial.printf("ALARM MESSAGE: %d\n\n", gatewaySendMessage.alarm);
-                uint8_t err = RHMeshManager.sendtoWait((uint8_t *)&gatewaySendMessage, sizeof(gateway_message), node1Addres);
-                if (err = RH_ROUTER_ERROR_NONE)
+                uint8_t err = RHMeshManager.sendto((uint8_t *)&gatewaySendMessage, sizeof(gateway_message), node1Addres);
+                if (err == RH_ROUTER_ERROR_NONE)
                 {
-                    Serial.printf("Succesfull sending command to Node %d", node1Addres);
+                    Serial.printf("Succesfull sending command to Node %d\n", node1Addres);
                 }
                 else
                 {
-                    Serial.printf("Failed to send command to node %d", node1Addres);
+                    Serial.printf("Failed to send command to node %d\n", node1Addres);
                 }
             }
         }
@@ -145,11 +146,12 @@ void DataHandling::recvFromNode(void *param)
     uint8_t nodeAddr;
     uint8_t node1MsgBuffLen = sizeof(node1MessageRx);
     uint8_t node2MsgBuffLen = sizeof(node2MessageRx);
-    const char *recvMsg[1] = {"OK"};
+    // const char *recvMsg[1] = {"OK"};
+    std::string _msgAck = String("OK").c_str();
     while (true)
     {
 
-        Serial.printf("Menunggu data dari node %d & %d \n", node1Addres, node2Addres);
+        Serial.println("Menunggu data dari node " + (String)node1Addres + " & " + (String)node2Addres);
         if (RHMeshManager.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 1000, &nodeAddr))
 
         {
@@ -173,10 +175,17 @@ void DataHandling::recvFromNode(void *param)
             {
                 Serial.println("Data From Node 2");
                 mempcpy(&node2MessageRx, _msgRcvBuf, node2MsgBuffLen);
+                Serial.print("time_stamp: ");
+                Serial.println(node2MessageRx.time_stamp);
+                Serial.print("PGA: ");
+                Serial.println(node2MessageRx.pga, 6);
                 DataHandling::GetInstance()->sendDataToGateway((const uint8_t *)&node2MessageRx);
             }
-            if (RHMeshManager.sendto(reinterpret_cast<uint8_t *>(&recvMsg[0]), sizeof(recvMsg), nodeAddr))
-                ;
+            uint8_t err = RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&_msgAck), _msgAck.size(), nodeAddr);
+            if (err == RH_ROUTER_ERROR_NONE)
+            {
+                Serial.println("Succesfull sending Ack to Node " + (String)nodeAddr);
+            }
             else
             {
                 Serial.println("Failed to send reply....");
@@ -216,6 +225,7 @@ unsigned long DataHandling::getTime()
     time(&now);
     return now;
 }
+
 // void DataHandling::onDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
 // {
 //     if (memcmp(mac, client1Addr, sizeof(client1Addr)) == 0)
